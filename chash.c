@@ -8,51 +8,92 @@
 extern rwlock_t mutex;
 FILE *outputFile;
 
-void logCommand(const char *command, const char *name, const char *salaryStr) {
-    fprintf(outputFile, "%s,%s,%s\n", command, name, salaryStr);
+int lockAcquisitions = 0;
+int lockReleases = 0;
+
+void logCommand(const char *command, const char *name, const char *salaryStr ) {
+  if (strcmp(command, "print") == 0||strcmp(command, "search") == 0){
+
+    return;
+
+  }
+  uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t *)name, strlen(name));
+    fprintf(outputFile, "%s,%u,%s,%s\n", command,hash, name, salaryStr);
 }
 
 void logLock(const char *lockType) {
-    fprintf(outputFile, "%s LOCK %s\n", lockType, "ACQUIRED");
+    fprintf(outputFile, "%s LOCK ACQUIRED\n", lockType);
+    lockAcquisitions++;
 }
 
 void logUnlock(const char *lockType) {
-    fprintf(outputFile, "%s LOCK %s\n", lockType, "RELEASED");
+    fprintf(outputFile, "%s LOCK RELEASED\n", lockType);
+    lockReleases++;
 }
 
 void executeCommand(const char *command, const char *name, const char *salaryStr) {
     uint32_t salary = strtoul(salaryStr, NULL, 10);
-    logCommand(command, name, salaryStr);
+  // if (strcmp(command, "print") == 0||strcmp(command, "search") == 0){
 
+     logCommand(command, name, salaryStr);
+    
+    
+  
+      
+  
     if (strcmp(command, "insert") == 0) {
         logLock("WRITE");
         rwlock_acquire_writelock(&mutex);
         insert(&hashDBHead, name, salary);
         rwlock_release_writelock(&mutex);
         logUnlock("WRITE");
-    } else if (strcmp(command, "delete") == 0) {
+    }  if (strcmp(command, "delete") == 0) {
         logLock("WRITE");
         rwlock_acquire_writelock(&mutex);
         delete(&hashDBHead, name);
         rwlock_release_writelock(&mutex);
         logUnlock("WRITE");
-    } else if (strcmp(command, "search") == 0) {
+    }  if (strcmp(command, "search") == 0) {
+      fprintf(outputFile ,"SEARCH,%s\n",name);
+  
         logLock("READ");
         rwlock_acquire_readlock(&mutex);
+       logUnlock("READ");
         hashRecord *result = search(hashDBHead, name);
         if (result != NULL) {
-            fprintf(outputFile, "%s,%s,%u\n", command, result->name, result->salary);
+           uint32_t hash = jenkins_one_at_a_time_hash((const uint8_t *)result->name, strlen(result->name));
+            fprintf(outputFile, "%u,%s,%u\n",hash, result->name, result->salary);
         } else {
             fprintf(outputFile, "No record found\n");
         }
         rwlock_release_readlock(&mutex);
         logUnlock("READ");
-    } else if (strcmp(command, "print") == 0) {
+    }  if (strcmp(command, "print") == 0) {
         logLock("READ");
         rwlock_acquire_readlock(&mutex);
         printHashDB(hashDBHead, outputFile);
         rwlock_release_readlock(&mutex);
         logUnlock("READ");
+    }
+}
+
+int extractThreadCount(const char *str) {
+    char *token;
+    char temp[100]; // Temporary buffer to hold the input string
+
+    // Copy the input string to the temporary buffer
+    strcpy(temp, str);
+
+    // Tokenize the string using comma as the delimiter
+    token = strtok(temp, ",");
+    token = strtok(NULL, ","); // Move to the second token
+
+    if (token != NULL) {
+        int threads = atoi(token); // Convert the token to an integer
+        return threads;
+    } else {
+        // Return -1 to indicate an error
+        return -1;
     }
 }
 
@@ -85,19 +126,38 @@ int main() {
     pthread_t threads[100]; // assuming a max of 100 commands for simplicity
     int tidx = 0;
 
-    while ((read = getline(&line, &len, inputFile)) != -1) {
-        char *cmd = strdup(line);
-        pthread_create(&threads[tidx++], NULL, threadFunction, cmd);
-    }
+  if ((read = getline(&line, &len, inputFile)) != -1) {
+      char *temp = strdup(line); // Store the first line in temp
+       fprintf(outputFile,"Running %d threads\n", extractThreadCount(temp));
+        free(temp); // Free the memory allocated for temp
+  }
 
+  // Read and process the remaining lines
+  while ((read = getline(&line, &len, inputFile)) != -1) {
+      char *cmd = strdup(line);
+      pthread_create(&threads[tidx++], NULL, threadFunction, cmd);
+  }
     for (int i = 0; i < tidx; i++) {
         pthread_join(threads[i], NULL);
     }
 
-    fclose(inputFile);
-    fclose(outputFile);
+    // fclose(inputFile);
+    // fclose(outputFile);
     if (line) {
         free(line);
     }
+
+    // Log final lock acquisition and release
+    logLock("READ");
+    rwlock_acquire_readlock(&mutex);
+    printHashDB(hashDBHead, outputFile);
+    rwlock_release_readlock(&mutex);
+    // Print number of lock acquisitions and releases
+    fprintf(outputFile, "Number of lock acquisitions: %d\n", lockAcquisitions);
+    fprintf(outputFile, "Number of lock releases: %d\n", lockReleases);
+    logUnlock("READ");
+
+   
+
     return EXIT_SUCCESS;
 }

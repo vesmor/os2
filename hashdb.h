@@ -19,6 +19,7 @@ extern hashRecord *hashDBHead; // Declare hashDBHead globally
 hashRecord *insert(hashRecord **head, const char *name, uint32_t salary);
 hashRecord *search(hashRecord *head, const char *name);
 hashRecord *delete(hashRecord **head, const char *name);
+
 void printHashDB(hashRecord *head, FILE *outputFile);
 uint32_t jenkins_one_at_a_time_hash(const uint8_t *key, size_t length);
 

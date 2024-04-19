@@ -61,9 +61,18 @@ hashRecord *search(hashRecord *head, const char *name) {
     }
     return head;
 }
+// void logCommand(const char *comman ,hashRecord *head, FILE *outputFile) {
+//   hashRecord *current = head;
+//    if (current) {
+//     fprintf(outputFile, "%s,%u,%s,%u\n", comman,current->hash, current->name, current->salary);
+//    }
+// }
 
 void printHashDB(hashRecord *head, FILE *outputFile) {
     for (hashRecord *current = head; current != NULL; current = current->next) {
         fprintf(outputFile, "%u,%s,%u\n", current->hash, current->name, current->salary);
     }
+
+
+
 }
