@@ -7,7 +7,6 @@
 
 hashRecord *hashDBHead = NULL; // Initialize hashDBHead
 
-
 uint32_t jenkins_one_at_a_time_hash(const uint8_t *key, size_t length) {
     uint32_t hash = 0;
     for (size_t i = 0; i < length; ++i) {
@@ -61,6 +60,7 @@ hashRecord *search(hashRecord *head, const char *name) {
     }
     return head;
 }
+
 // void logCommand(const char *comman ,hashRecord *head, FILE *outputFile) {
 //   hashRecord *current = head;
 //    if (current) {
@@ -72,7 +72,4 @@ void printHashDB(hashRecord *head, FILE *outputFile) {
     for (hashRecord *current = head; current != NULL; current = current->next) {
         fprintf(outputFile, "%u,%s,%u\n", current->hash, current->name, current->salary);
     }
-
-
-
 }
