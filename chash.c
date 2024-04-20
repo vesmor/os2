@@ -142,14 +142,15 @@ int main() {
 	}
 
 	// Log final lock acquisition and release
-	logLock("READ");
 	rwlock_acquire_readlock(&mutex);
+	logLock("READ");
 	printHashDB(hashDBHead, outputFile);
+	logUnlock("READ");
 	rwlock_release_readlock(&mutex);
+
 	// Print number of lock acquisitions and releases
 	fprintf(outputFile, "Number of lock acquisitions: %d\n", lockAcquisitions);
 	fprintf(outputFile, "Number of lock releases: %d\n", lockReleases);
-	logUnlock("READ");
 
 	return EXIT_SUCCESS;
 }
