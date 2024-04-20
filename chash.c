@@ -39,14 +39,14 @@ void executeCommand(const char *command, const char *name, const char *salaryStr
 		rwlock_acquire_writelock(&mutex);
 		logLock("WRITE");
 		insert(&hashDBHead, name, salary);
-		rwlock_release_writelock(&mutex);
 		logUnlock("WRITE");
+		rwlock_release_writelock(&mutex);
 	}  if (strcmp(command, "delete") == 0) {
 		rwlock_acquire_writelock(&mutex);
 		logLock("WRITE");
 		delete(&hashDBHead, name);
-		rwlock_release_writelock(&mutex);
 		logUnlock("WRITE");
+		rwlock_release_writelock(&mutex);
 	}  if (strcmp(command, "search") == 0) {
 		fprintf(outputFile ,"SEARCH,%s\n",name);
 
