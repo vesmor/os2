@@ -11,6 +11,7 @@ FILE *outputFile;
 int lockAcquisitions = 0;
 int lockReleases = 0;
 
+// kehmgh
 void logCommand(const char *command, const char *name, const char *salaryStr ) {
 	if (strcmp(command, "print") == 0||strcmp(command, "search") == 0){
 		return;
